@@ -1,0 +1,166 @@
+table fact_persistency
+	excludeFromModelRefresh
+	lineageTag: b2d335e0-e47c-422e-8194-f7aae325334a
+
+	measure 'Persistency Rate' =
+			VAR RenewedPolicies =
+				CALCULATE(
+					COUNTROWS(fact_persistency),
+					CROSSFILTER(fact_persistency[issue_date_key], dim_date[date_key], NONE),
+					USERELATIONSHIP(fact_persistency[renewal_due_date_key], dim_date[date_key])
+				)
+			VAR DuePolicies =
+				CALCULATE(
+					COUNTROWS(fact_persistency),
+					CROSSFILTER(fact_persistency[issue_date_key], dim_date[date_key], NONE),
+					USERELATIONSHIP(fact_persistency[renewal_due_date_key], dim_date[date_key])
+				)
+			RETURN
+				DIVIDE(RenewedPolicies, DuePolicies)
+		formatString: 0.0%
+		lineageTag: be09ec00-1d67-4ae4-b6e9-74aaa404f321
+
+	measure 'Active Policy Count' =
+			VAR ActivePolicySnapshot =
+				LASTNONBLANKVALUE(
+					dim_date[date],
+					VAR SnapshotDateKey = MAX(dim_date[date_key])
+					RETURN
+						CALCULATE(
+							DISTINCTCOUNT(fact_persistency[policy_id]),
+							CROSSFILTER(fact_persistency[issue_date_key], dim_date[date_key], NONE),
+							FILTER(
+								fact_persistency,
+								fact_persistency[issue_date_key] <= SnapshotDateKey
+									&& fact_persistency[renewal_status] <> "lapsed"
+							)
+						)
+				)
+			RETURN
+				ActivePolicySnapshot
+		formatString: #,##0
+		lineageTag: 4d7bfafe-090e-4eb0-a440-7d46a3184c79
+
+	measure 'Renewed Policy Count' =
+			VAR RenewedPolicies =
+				CALCULATE(
+					DISTINCTCOUNT(fact_persistency[policy_id]),
+					fact_persistency[renewal_status] = "renewed",
+					CROSSFILTER(fact_persistency[issue_date_key], dim_date[date_key], NONE),
+					USERELATIONSHIP(fact_persistency[renewal_due_date_key], dim_date[date_key])
+				)
+			RETURN
+				RenewedPolicies
+		formatString: #,##0
+		lineageTag: 54382046-6bcb-411d-8238-2baa7b415f1d
+
+	measure 'Due Policy Count' =
+			VAR DuePolicies =
+				CALCULATE(
+					DISTINCTCOUNT(fact_persistency[policy_id]),
+					fact_persistency[renewal_status] IN {"renewed", "lapsed", "grace"},
+					CROSSFILTER(fact_persistency[issue_date_key], dim_date[date_key], NONE),
+					USERELATIONSHIP(fact_persistency[renewal_due_date_key], dim_date[date_key])
+				)
+			RETURN
+				DuePolicies
+		formatString: #,##0
+		lineageTag: 1674d1fe-2ecd-4d1c-89bf-9f12ef6ca517
+
+	measure 'Cohort Renewal Rate' =
+			VAR CohortRenewalRate = DIVIDE([Renewed Policy Count], [Due Policy Count])
+			RETURN
+				CohortRenewalRate
+		formatString: 0.0%
+		lineageTag: af21ca1c-4486-48ab-aef9-0f3e8c2e06a2
+
+	column policy_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 0675a14c-3e26-4bff-b986-58b1d861d996
+		summarizeBy: sum
+		sourceColumn: policy_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column agent_id
+		dataType: int64
+		formatString: 0
+		lineageTag: f7d6cdbf-22ad-4914-8275-7afe2976aeb8
+		summarizeBy: none
+		sourceColumn: agent_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 00fc1211-8fea-4307-8cad-b05c9542a563
+		summarizeBy: none
+		sourceColumn: product_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column issue_date_key
+		dataType: int64
+		formatString: 0
+		lineageTag: fd2732b2-55eb-4430-9490-7fcd9fa0409e
+		summarizeBy: sum
+		sourceColumn: issue_date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column renewal_due_date_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 4950d8b9-41eb-4898-af87-182fcb30762f
+		summarizeBy: sum
+		sourceColumn: renewal_due_date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column renewal_status
+		dataType: string
+		lineageTag: 3b0b490e-c449-4d9a-8c02-0934ed5931c5
+		summarizeBy: none
+		sourceColumn: renewal_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column premium_usd
+		dataType: double
+		lineageTag: a00eb517-fcd0-4c0f-983f-6a0ab41a0ed4
+		summarizeBy: sum
+		sourceColumn: premium_usd
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column issue_year = LOOKUPVALUE(dim_date[year], dim_date[date_key], fact_persistency[issue_date_key])
+		dataType: int64
+		formatString: 0
+		lineageTag: 4b6c8f35-7da7-4d64-b5ab-2fa0a4ce5d2a
+		summarizeBy: none
+
+	column renewal_year = LOOKUPVALUE(dim_date[year], dim_date[date_key], fact_persistency[renewal_due_date_key])
+		dataType: int64
+		formatString: 0
+		lineageTag: 5c7d9f46-8eb8-4e75-c6bc-3fb1b5df6e3b
+		summarizeBy: none
+
+	partition fact_persistency = m
+		mode: import
+		source =
+				let
+				  Source = Excel.Workbook(File.Contents("C:\Users\ovmw\OneDrive - Chevron\Desktop\DA Reports\Assignment\fact_persistency.xlsx"), null, true),
+				  #"Navigation 1" = Source{[Item = "fact_persistency", Kind = "Sheet"]}[Data],
+				  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"policy_id", Int64.Type}, {"agent_id", Int64.Type}, {"product_id", Int64.Type}, {"issue_date_key", Int64.Type}, {"renewal_due_date_key", Int64.Type}, {"renewal_status", type text}, {"premium_usd", type number}})
+				in
+				  #"Changed column type"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

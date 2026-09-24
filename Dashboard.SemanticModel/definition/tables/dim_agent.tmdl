@@ -1,0 +1,102 @@
+table dim_agent
+	excludeFromModelRefresh
+	lineageTag: c4070faf-2c04-4fbc-be4e-869cdf5964d8
+
+	column agent_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 11acbdf2-bf1d-4b43-8f55-bf2e9223ab26
+		summarizeBy: none
+		sourceColumn: agent_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column agent_code
+		dataType: string
+		lineageTag: 97f2851a-0bed-4003-9efa-3db07b795b5e
+		summarizeBy: none
+		sourceColumn: agent_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column agent_name
+		dataType: string
+		lineageTag: 75df3552-f0ef-4510-be24-1244d78eb513
+		summarizeBy: none
+		sourceColumn: agent_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column region
+		dataType: string
+		lineageTag: 2e2e3459-37c1-4d09-878e-eba4b3da47f5
+		summarizeBy: none
+		sourceColumn: region
+
+		annotation SummarizationSetBy = Automatic
+
+	column territory
+		dataType: string
+		lineageTag: a2aee39f-f0c0-4f3f-b184-fbb6d35298fa
+		summarizeBy: none
+		sourceColumn: territory
+
+		annotation SummarizationSetBy = Automatic
+
+	column office
+		dataType: string
+		lineageTag: 4b055bf9-f154-4c2b-a4ba-788a6cc76e90
+		summarizeBy: none
+		sourceColumn: office
+
+		annotation SummarizationSetBy = Automatic
+
+	column join_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 9eecb2ed-2798-4515-8407-a6efc1788f6b
+		summarizeBy: none
+		sourceColumn: join_date
+
+		variation Variation
+			isDefault
+			relationship: 22b9f407-52f4-459a-9c23-f0565191ed68
+			defaultHierarchy: LocalDateTable_afc93583-b918-48df-94a1-bd7653f4f24b.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column channel
+		dataType: string
+		lineageTag: 3e60406f-2283-4352-89b5-64645fda4220
+		summarizeBy: none
+		sourceColumn: channel
+
+		annotation SummarizationSetBy = Automatic
+
+	column active_flag
+		dataType: int64
+		formatString: 0
+		lineageTag: 09006069-fb29-44ef-a343-9dcd9511f452
+		summarizeBy: sum
+		sourceColumn: active_flag
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_agent = m
+		mode: import
+		source =
+				let
+				  Source = Excel.Workbook(File.Contents("C:\Users\ovmw\OneDrive - Chevron\Desktop\DA Reports\Assignment\dim_agent.xlsx"), null, true),
+				  #"Navigation 1" = Source{[Item = "dim_agent", Kind = "Sheet"]}[Data],
+				  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"agent_id", Int64.Type}, {"agent_code", type text}, {"agent_name", type text}, {"region", type text}, {"territory", type text}, {"office", type text}, {"join_date", type date}, {"channel", type text}, {"active_flag", Int64.Type}}),
+				  #"Added unknown agent" = Table.InsertRows(#"Changed column type", 0, {[agent_id = -1, agent_code = "UNKNOWN", agent_name = "Unknown", region = "Unassigned", territory = "Unassigned", office = "Unassigned", join_date = null, channel = "Unassigned", active_flag = 0]})
+				in
+				  #"Added unknown agent"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

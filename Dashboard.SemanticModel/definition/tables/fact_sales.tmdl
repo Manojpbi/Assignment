@@ -1,0 +1,188 @@
+table fact_sales
+	excludeFromModelRefresh
+	lineageTag: 6f7eca59-902f-41fe-8cda-c21eaf05d2c5
+
+	measure APE =
+			VAR TotalAPE = SUM(fact_sales[ape_usd])
+			RETURN
+				TotalAPE
+		formatString: $#,##0
+		lineageTag: 79f659f6-96ab-497e-99fe-47a3c2b3e98a
+
+	measure 'APE YTD' =
+			VAR APEYTD = CALCULATE([APE], DATESYTD(dim_date[date]))
+			RETURN
+				APEYTD
+		formatString: $#,##0
+		lineageTag: d897a4ed-ad81-4208-be1f-d48a7b17238c
+
+	measure 'APE MoM Growth %' =
+			VAR CurrentAPE = [APE]
+			VAR PreviousAPE = CALCULATE([APE], DATEADD(dim_date[date], -1, MONTH))
+			VAR IsFirstVisibleMonth = ISBLANK(PreviousAPE)
+			RETURN
+				IF(IsFirstVisibleMonth, BLANK(), DIVIDE(CurrentAPE - PreviousAPE, PreviousAPE))
+		formatString: 0.0%;-0.0%;-
+		lineageTag: 53bbb0d4-67d5-44e8-8332-01f657c15388
+
+	measure 'APE Rolling 3 Months' =
+			VAR LastVisibleDate = MAX(dim_date[date])
+			RETURN
+				CALCULATE([APE], DATESINPERIOD(dim_date[date], LastVisibleDate, -3, MONTH))
+		formatString: $#,##0
+		lineageTag: 7d83155e-a602-4875-8343-002a70011a90
+
+	measure 'APE Target' =
+			VAR TotalTarget = SUM(fact_target[ape_target_usd])
+			RETURN
+				TotalTarget
+		formatString: $#,##0
+		lineageTag: 0a10d978-fb32-4f63-9e64-65593230eee2
+
+	measure 'APE vs Target %' =
+			VAR ActualAPE = [APE]
+			VAR TargetAPE = [APE Target]
+			RETURN
+				DIVIDE(ActualAPE - TargetAPE, TargetAPE)
+		formatString: 0.0%;-0.0%;-
+		lineageTag: 9f882231-c59c-438e-89d5-9577a3bf60b5
+
+	measure 'Active Agent Count' =
+			VAR ActiveAgents = CALCULATE(DISTINCTCOUNT(dim_agent[agent_id]), dim_agent[active_flag] = 1)
+			RETURN
+				ActiveAgents
+		formatString: #,##0
+		lineageTag: bf522d34-892f-4553-b66a-c8e1552b62a9
+
+	measure 'Agent Rank by APE' =
+			VAR CurrentAPE = [APE]
+			VAR AgentUniverse =
+				CALCULATETABLE(
+					ALLSELECTED(dim_agent[agent_id]),
+					REMOVEFILTERS(dim_agent[agent_id], dim_agent[agent_name], dim_agent[agent_code])
+				)
+			VAR AgentRank =
+				RANKX(
+					AgentUniverse,
+					CALCULATE([APE], REMOVEFILTERS(dim_agent[agent_name], dim_agent[agent_code])),
+					CurrentAPE,
+					DESC,
+					DENSE
+				)
+			RETURN
+				AgentRank
+		formatString: 0
+		lineageTag: b3b1fb54-8d9f-4889-926c-7dd1ff94e8e6
+
+	measure 'Top Product by APE' =
+			VAR TopProduct =
+				TOPN(1, ALLSELECTED(dim_product[product_name]), [APE], DESC)
+			RETURN
+				CONCATENATEX(TopProduct, dim_product[product_name], ", ")
+		lineageTag: 0fba4d79-9508-44a5-8510-b43402100a19
+
+	measure 'Agent Profile HTML' =
+			VAR AgentName = SELECTEDVALUE(dim_agent[agent_name], "Select an agent")
+			VAR TerritoryValue = CONCATENATEX(FILTER(VALUES(dim_agent[territory]), LEN(TRIM(dim_agent[territory])) > 0), dim_agent[territory], ", ")
+			VAR Territory = IF(LEN(TRIM(TerritoryValue)) = 0, "Unassigned", TerritoryValue)
+			VAR CurrentAPE = COALESCE(FORMAT([APE YTD], "$#,##0"), "$0")
+			VAR AgentRank = COALESCE(FORMAT([Agent Rank by APE], "0"), "-")
+			VAR MoM = [APE MoM Growth %]
+			VAR TrendArrow = IF(ISBLANK(MoM), "-", IF(MoM >= 0, "↑", "↓"))
+			VAR TrendText = IF(ISBLANK(MoM), "No prior month", FORMAT(MoM, "0.0%"))
+			VAR TrendColor = IF(ISBLANK(MoM), "#687789", IF(MoM >= 0, "#16803c", "#c43d3d"))
+			VAR ProductName = COALESCE([Top Product by APE], "-")
+			VAR Persistency = COALESCE(FORMAT([Persistency Rate], "0.0%"), "-")
+			RETURN
+				"<article style='box-sizing:border-box;width:100%;min-height:520px;padding:44px 52px;background:#ffffff;border:1px solid #dce3ea;border-radius:12px;font-family:Segoe UI,Arial,sans-serif;color:#18304b;box-shadow:0 6px 18px rgba(24,48,75,.10)'><header style='display:flex;justify-content:space-between;align-items:flex-start;gap:28px;padding-bottom:30px;border-bottom:1px solid #e8edf2'><div style='min-width:0'><div style='font-size:15px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#637789'>Agent profile</div><div style='margin-top:10px;font-size:36px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>" & AgentName & "</div><div style='margin-top:10px;font-size:20px;color:#637789'>Territory · " & Territory & "</div></div><div style='flex:0 0 auto;padding:9px 14px;border-radius:999px;background:#edf5ef;color:#16803c;font-size:14px;font-weight:600'>YTD view</div></header><section style='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-top:30px'><div style='padding:20px;background:#f6f8fa;border-radius:10px'><div style='font-size:14px;color:#637789;text-transform:uppercase;letter-spacing:.6px'>YTD APE</div><div style='margin-top:10px;font-size:32px;font-weight:700'>" & CurrentAPE & "</div></div><div style='padding:20px;background:#f6f8fa;border-radius:10px'><div style='font-size:14px;color:#637789;text-transform:uppercase;letter-spacing:.6px'>APE rank</div><div style='margin-top:10px;font-size:32px;font-weight:700'>#" & AgentRank & "</div></div><div style='padding:20px;background:#f6f8fa;border-radius:10px'><div style='font-size:14px;color:#637789;text-transform:uppercase;letter-spacing:.6px'>MoM trend</div><div style='margin-top:10px;font-size:28px;font-weight:700;color:" & TrendColor & "'>" & TrendArrow & " " & TrendText & "</div></div><div style='padding:20px;background:#f6f8fa;border-radius:10px'><div style='font-size:14px;color:#637789;text-transform:uppercase;letter-spacing:.6px'>Persistency</div><div style='margin-top:10px;font-size:32px;font-weight:700'>" & Persistency & "</div></div></section><footer style='display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:30px;padding-top:22px;border-top:1px solid #e8edf2'><div style='min-width:0'><div style='font-size:14px;color:#637789;text-transform:uppercase;letter-spacing:.6px'>Top product by APE</div><div style='margin-top:8px;font-size:24px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>" & ProductName & "</div></div><div style='font-size:15px;color:#637789;text-align:right'>Selected agent</div></footer></article>"
+		lineageTag: 125285ff-2c32-43d0-ac6e-986da66b3160
+
+	column sale_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 3ed2feeb-53ee-479d-b25b-b501ef75c109
+		summarizeBy: sum
+		sourceColumn: sale_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column date_key
+		dataType: int64
+		formatString: 0
+		lineageTag: eb9599d3-5b3f-4080-ba1f-c9006384142d
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column agent_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 853dd35f-01d3-4f06-94e2-198235fda1f9
+		summarizeBy: none
+		sourceColumn: agent_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_id
+		dataType: int64
+		formatString: 0
+		lineageTag: c6e28088-78a7-42c1-b33a-5a6ea47e92e2
+		summarizeBy: none
+		sourceColumn: product_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column ape_usd
+		dataType: double
+		lineageTag: 35938b6b-8979-4e88-b77f-f65194317a3f
+		summarizeBy: sum
+		sourceColumn: ape_usd
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column fyp_usd
+		dataType: double
+		lineageTag: e4427a59-fecd-4cd7-bb79-c8465f42e72e
+		summarizeBy: sum
+		sourceColumn: fyp_usd
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column policies_issued
+		dataType: int64
+		formatString: 0
+		lineageTag: 0c609eed-28ab-49ca-af39-8028b05ee054
+		summarizeBy: sum
+		sourceColumn: policies_issued
+
+		annotation SummarizationSetBy = Automatic
+
+	column sale_channel
+		dataType: string
+		lineageTag: 765d3bf5-655e-4833-9f5f-8a1590fa3c9c
+		summarizeBy: none
+		sourceColumn: sale_channel
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_sales = m
+		mode: import
+		source =
+				let
+				  Source = Excel.Workbook(File.Contents("C:\Users\ovmw\OneDrive - Chevron\Desktop\DA Reports\Assignment\fact_sales.xlsx"), null, true),
+				  #"Navigation 1" = Source{[Item = "fact_sales", Kind = "Sheet"]}[Data],
+				  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"sale_id", Int64.Type}, {"date_key", Int64.Type}, {"agent_id", Int64.Type}, {"product_id", Int64.Type}, {"ape_usd", type number}, {"fyp_usd", type number}, {"policies_issued", Int64.Type}, {"sale_channel", type text}}),
+				  #"Mapped orphan agents" = Table.TransformColumns(#"Changed column type", {{"agent_id", each if List.Contains(dim_agent[agent_id], _) then _ else -1, Int64.Type}})
+				in
+				  #"Mapped orphan agents"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

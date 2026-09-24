@@ -1,0 +1,229 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "7fa0847b1db281804e16",
+  "position": {
+    "x": 0,
+    "y": 129.41176470588235,
+    "z": 0,
+    "height": 950.98039215686276,
+    "width": 1919.6078431372548,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "deneb7E15AEF80B9E4D4F8E12924291ECE89A",
+    "query": {
+      "queryState": {
+        "dataset": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_agent"
+                    }
+                  },
+                  "Property": "agent_name"
+                }
+              },
+              "queryRef": "dim_agent.agent_name",
+              "nativeQueryRef": "agent_name"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_sales"
+                    }
+                  },
+                  "Property": "APE"
+                }
+              },
+              "queryRef": "fact_sales.APE",
+              "nativeQueryRef": "APE"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_sales"
+                    }
+                  },
+                  "Property": "APE Target"
+                }
+              },
+              "queryRef": "fact_sales.APE Target",
+              "nativeQueryRef": "APE Target"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "dim_agent"
+                  }
+                },
+                "Property": "agent_name"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "objects": {
+      "vega": [
+        {
+          "properties": {
+            "provider": {
+              "expr": {
+                "Literal": {
+                  "Value": "'vegaLite'"
+                }
+              }
+            },
+            "jsonSpec": {
+              "expr": {
+                "Literal": {
+                  "Value": "'{\n  \"$schema\": \"https://vega.github.io/schema/vega-lite/v5.json\",\n  \"description\": \"Agent performance against monthly target\",\n  \"data\": {\n    \"name\": \"dataset\"\n  },\n  \"transform\": [\n    {\n      \"calculate\": \"datum[''APE Target''] == 0 ? null : datum[''APE''] / datum[''APE Target'']\",\n      \"as\": \"performanceRatio\"\n    },\n    {\n      \"calculate\": \"datum.performanceRatio >= 1 ? ''Above target'' : datum.performanceRatio >= 0.9 ? ''On track'' : ''Below target''\",\n      \"as\": \"performanceBand\"\n    }\n  ],\n  \"encoding\": {\n    \"y\": {\n      \"field\": \"agent_name\",\n      \"type\": \"nominal\",\n      \"sort\": \"-x\",\n      \"title\": null,\n      \"axis\": {\n        \"labelLimit\": 180,\n        \"labelFontSize\": 11\n      }\n    }\n  },\n  \"layer\": [\n    {\n      \"mark\": {\n        \"type\": \"bar\",\n        \"color\": \"#d9dee5\",\n        \"size\": 14\n      },\n      \"encoding\": {\n        \"x\": {\n          \"field\": \"APE Target\",\n          \"type\": \"quantitative\",\n          \"title\": \"APE vs Monthly Target\",\n          \"axis\": {\n            \"format\": \",.0f\",\n            \"grid\": true\n          }\n        }\n      }\n    },\n    {\n      \"mark\": {\n        \"type\": \"bar\",\n        \"size\": 10,\n        \"cornerRadiusEnd\": 2\n      },\n      \"encoding\": {\n        \"x\": {\n          \"field\": \"APE\",\n          \"type\": \"quantitative\"\n        },\n        \"color\": {\n          \"field\": \"performanceBand\",\n          \"type\": \"nominal\",\n          \"scale\": {\n            \"domain\": [\"Above target\", \"On track\", \"Below target\"],\n            \"range\": [\"#1a9850\", \"#f39c12\", \"#d73027\"]\n          },\n          \"legend\": {\n            \"title\": \"Performance\"\n          }\n        },\n        \"tooltip\": [\n          {\n            \"field\": \"agent_name\",\n            \"type\": \"nominal\",\n            \"title\": \"Agent\"\n          },\n          {\n            \"field\": \"APE\",\n            \"type\": \"quantitative\",\n            \"title\": \"APE\",\n            \"format\": \"$,.0f\"\n          },\n          {\n            \"field\": \"APE Target\",\n            \"type\": \"quantitative\",\n            \"title\": \"Target\",\n            \"format\": \"$,.0f\"\n          },\n          {\n            \"field\": \"performanceRatio\",\n            \"type\": \"quantitative\",\n            \"title\": \"Achievement\",\n            \"format\": \".0%\"\n          },\n          {\n            \"field\": \"performanceBand\",\n            \"type\": \"nominal\",\n            \"title\": \"Status\"\n          }\n        ]\n      }\n    },\n    {\n      \"mark\": {\n        \"type\": \"text\",\n        \"align\": \"left\",\n        \"dx\": 6,\n        \"fontSize\": 10,\n        \"color\": \"#18304b\"\n      },\n      \"encoding\": {\n        \"x\": {\n          \"field\": \"APE\",\n          \"type\": \"quantitative\"\n        },\n        \"text\": {\n          \"field\": \"performanceRatio\",\n          \"type\": \"quantitative\",\n          \"format\": \".0%\"\n        }\n      }\n    }\n  ],\n  \"width\": 1500,\n  \"height\": {\n    \"step\": 18\n  },\n  \"config\": {\n    \"view\": {\n      \"stroke\": null\n    },\n    \"axis\": {\n      \"titleFont\": \"Segoe UI Semibold\",\n      \"labelFont\": \"Segoe UI\"\n    }\n  }\n}'"
+                }
+              }
+            },
+            "jsonConfig": {
+              "expr": {
+                "Literal": {
+                  "Value": "'{}'"
+                }
+              }
+            },
+            "enableTooltips": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "enableContextMenu": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "enableContextMenuSelector": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "enableHighlight": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "enableSelection": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "selectionMaxDataPoints": {
+              "expr": {
+                "Literal": {
+                  "Value": "50D"
+                }
+              }
+            },
+            "selectionMode": {
+              "expr": {
+                "Literal": {
+                  "Value": "'simple'"
+                }
+              }
+            },
+            "version": {
+              "expr": {
+                "Literal": {
+                  "Value": "'6.4.3'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "stateManagement": [
+        {
+          "properties": {
+            "denebMetaVersion": {
+              "expr": {
+                "Literal": {
+                  "Value": "'2'"
+                }
+              }
+            },
+            "viewportHeight": {
+              "expr": {
+                "Literal": {
+                  "Value": "919D"
+                }
+              }
+            },
+            "viewportWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "1886D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "developer": [
+        {
+          "properties": {
+            "version": {
+              "expr": {
+                "Literal": {
+                  "Value": "'2.0.0.0'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "editor": [
+        {
+          "properties": {
+            "theme": {
+              "expr": {
+                "Literal": {
+                  "Value": "'light'"
+                }
+              }
+            },
+            "debugTableRowsPerPage": {
+              "expr": {
+                "Literal": {
+                  "Value": "50D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

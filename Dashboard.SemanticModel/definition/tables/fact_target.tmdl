@@ -1,0 +1,66 @@
+table fact_target
+	excludeFromModelRefresh
+	lineageTag: 1ed55087-59b0-40bb-a2f1-e9f5b6790abc
+
+	column agent_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 3f8704f7-7db9-4474-b94e-5563d7a67e4f
+		summarizeBy: none
+		sourceColumn: agent_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column year
+		dataType: int64
+		formatString: 0
+		lineageTag: 28fca66c-383e-4923-9ea5-593b1871d932
+		summarizeBy: sum
+		sourceColumn: year
+
+		annotation SummarizationSetBy = Automatic
+
+	column month
+		dataType: int64
+		formatString: 0
+		lineageTag: 18d87f27-3438-4b3c-a9dc-4376901c8284
+		summarizeBy: sum
+		sourceColumn: month
+
+		annotation SummarizationSetBy = Automatic
+
+	column ape_target_usd
+		dataType: double
+		lineageTag: f7d1f1fc-9b3e-4f64-b9f9-4b44f5ae9426
+		summarizeBy: sum
+		sourceColumn: ape_target_usd
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column target_date_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 4cc7fbd5-3781-4d4f-b0c7-3ba8c19e9e71
+		summarizeBy: none
+		sourceColumn: target_date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_target = m
+		mode: import
+		source =
+				let
+				  Source = Excel.Workbook(File.Contents("C:\Users\ovmw\OneDrive - Chevron\Desktop\DA Reports\Assignment\fact_target.xlsx"), null, true),
+				  #"Navigation 1" = Source{[Item = "fact_target", Kind = "Sheet"]}[Data],
+				  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"agent_id", Int64.Type}, {"year", Int64.Type}, {"month", Int64.Type}, {"ape_target_usd", type number}}),
+				  #"Added target date key" = Table.AddColumn(#"Changed column type", "target_date_key", each [year] * 10000 + [month] * 100 + 1, Int64.Type)
+				in
+				  #"Added target date key"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

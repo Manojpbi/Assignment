@@ -1,0 +1,75 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "9e7808726ee7ba5b904e",
+  "position": {
+    "x": 209.52,
+    "y": 49.68,
+    "z": 0,
+    "height": 900,
+    "width": 1600,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "htmlContent443BE3AD55E043BF878BED274D3A6855",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_sales"
+                    }
+                  },
+                  "Property": "Agent Profile HTML"
+                }
+              },
+              "queryRef": "fact_sales.Agent Profile HTML",
+              "nativeQueryRef": "Agent Profile HTML",
+              "active": true
+            }
+          ]
+        },
+        "content": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_sales"
+                    }
+                  },
+                  "Property": "Agent Profile HTML"
+                }
+              },
+              "queryRef": "fact_sales.Agent Profile HTML",
+              "nativeQueryRef": "Agent Profile HTML"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "agent-profile-filter",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_agent"
+              }
+            },
+            "Property": "agent_name"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
+  }
+}

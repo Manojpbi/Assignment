@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page 1 Wireframe</title>
+  <style>
+    :root { font-family: Arial, sans-serif; color: #18304b; background: #edf2f5; }
+    body { margin: 0; padding: 24px; }
+    .canvas { max-width: 1180px; margin: auto; background: white; border: 2px solid #b8c6d1; padding: 20px; }
+    .zone { border: 2px dashed #6d8496; background: #f7fafc; padding: 16px; margin-bottom: 16px; }
+    .zone h2 { margin: 0 0 10px; font-size: 15px; text-transform: uppercase; letter-spacing: .08em; }
+    .header { min-height: 58px; display: flex; justify-content: flex-start; align-items: center; }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .kpi { min-height: 70px; border: 1px solid #9db0bf; padding: 12px; background: #fff; }
+    .dashboard-layout { display: grid; grid-template-columns: 230px 1fr; gap: 16px; align-items: start; }
+    .sidebar { min-height: 520px; }
+    .filters { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .filter { display: flex; flex-direction: column; gap: 6px; }
+    .filter label { font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .filter select { min-height: 38px; border: 1px solid #9db0bf; background: #fff; color: #18304b; padding: 8px; font-size: 14px; }
+    .main { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .chart { min-height: 300px; }
+    .chart-boxes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .chart-box { min-height: 260px; border: 1px solid #9db0bf; background: #fff; padding: 14px; }
+    .bar { height: 10px; background: #b8c6d1; margin: 14px 0; }
+    @media (max-width: 700px) { body { padding: 8px; } .dashboard-layout { grid-template-columns: 1fr; } .sidebar { min-height: auto; } .kpis { grid-template-columns: 1fr 1fr; } .main, .chart-boxes { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="canvas">
+    <section class="zone header"><h2>Executive Summary</h2></section>
+    <div class="dashboard-layout">
+      <aside class="zone sidebar"><h2>Filters</h2><div class="filters">
+        <div class="filter"><label for="region">Region</label><select id="region"><option>All regions</option></select></div>
+        <div class="filter"><label for="channel">Channel</label><select id="channel"><option>All channels</option></select></div>
+        <div class="filter"><label for="year">Year</label><select id="year"><option>All years</option></select></div>
+      </div></aside>
+      <div class="main">
+        <section class="zone"><h2>KPI strip</h2><div class="kpis"><div class="kpi">APE YTD</div><div class="kpi">APE vs Target %</div><div class="kpi">Active Agents</div><div class="kpi">Persistency Rate</div></div></section>
+        <section class="zone chart"><h2>Chart area</h2><div class="chart-boxes">
+          <div class="chart-box"><strong>Trend chart</strong><p>Monthly APE with target line overlay</p><div class="bar"></div><div class="bar" style="width:78%"></div><div class="bar" style="width:62%"></div></div>
+          <div class="chart-box"><strong>Top 10 agents by APE</strong><p>Horizontal bar chart</p><div class="bar" style="width:88%"></div><div class="bar" style="width:72%"></div><div class="bar" style="width:58%"></div><div class="bar" style="width:44%"></div></div>
+        </div></section>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

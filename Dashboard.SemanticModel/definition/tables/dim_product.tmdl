@@ -1,0 +1,60 @@
+table dim_product
+	excludeFromModelRefresh
+	lineageTag: d11e30b8-118b-4047-b1db-f19e83e50afc
+
+	column product_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 636576cb-3f59-480d-8315-9ad32dd96176
+		summarizeBy: none
+		sourceColumn: product_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_code
+		dataType: string
+		lineageTag: 09d91835-4a8e-474c-b874-1433f0db98ec
+		summarizeBy: none
+		sourceColumn: product_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_name
+		dataType: string
+		lineageTag: 7f973464-4c9f-4d80-a888-99f28ced9365
+		summarizeBy: none
+		sourceColumn: product_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_category
+		dataType: string
+		lineageTag: a4f7cbd0-f4d3-4af6-80f6-cf140a494af0
+		summarizeBy: none
+		sourceColumn: product_category
+
+		annotation SummarizationSetBy = Automatic
+
+	column premium_type
+		dataType: string
+		lineageTag: 751945b6-d4ef-40f5-a7a9-a6e928687aa5
+		summarizeBy: none
+		sourceColumn: premium_type
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_product = m
+		mode: import
+		source =
+				let
+				  Source = Excel.Workbook(File.Contents("C:\Users\ovmw\OneDrive - Chevron\Desktop\DA Reports\Assignment\dim_product.xlsx"), null, true),
+				  #"Navigation 1" = Source{[Item = "dim_product", Kind = "Sheet"]}[Data],
+				  #"Promoted headers" = Table.PromoteHeaders(#"Navigation 1", [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"product_id", Int64.Type}, {"product_code", type text}, {"product_name", type text}, {"product_category", type text}, {"premium_type", type text}})
+				in
+				  #"Changed column type"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+
